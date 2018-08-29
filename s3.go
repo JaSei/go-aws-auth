@@ -14,7 +14,7 @@ func signatureS3(stringToSign string, keys Credentials) string {
 	return base64.StdEncoding.EncodeToString(hashed)
 }
 
-func stringToSignS3(request *http.Request) string {
+func stringToSignS3(request *http.Request, virtual bool) string {
 	str := request.Method + "\n"
 
 	if request.Header.Get("Content-Md5") != "" {
@@ -42,7 +42,7 @@ func stringToSignS3(request *http.Request) string {
 		str += canonicalHeaders
 	}
 
-	str += canonicalResourceS3(request)
+	str += canonicalResourceS3(request, virtual)
 
 	return str
 }
@@ -78,10 +78,10 @@ func canonicalAmzHeadersS3(request *http.Request) string {
 	}
 }
 
-func canonicalResourceS3(request *http.Request) string {
+func canonicalResourceS3(request *http.Request, virtual bool) string {
 	res := ""
 
-	if isS3VirtualHostedStyle(request) {
+	if virtual || isS3VirtualHostedStyle(request) {
 		bucketname := strings.Split(request.Host, ".")[0]
 		res += "/" + bucketname
 	}

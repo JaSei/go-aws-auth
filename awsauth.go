@@ -126,7 +126,28 @@ func SignS3(request *http.Request, credentials ...Credentials) *http.Request {
 
 	prepareRequestS3(request)
 
-	stringToSign := stringToSignS3(request)
+	stringToSign := stringToSignS3(request, false)
+	signature := signatureS3(stringToSign, keys)
+
+	authHeader := "AWS " + keys.AccessKeyID + ":" + signature
+	request.Header.Set("Authorization", authHeader)
+
+	return request
+}
+
+// SignS3 signs a request bound for Amazon S3 using their custom
+// HTTP authentication scheme.
+func SignS3Virtual(request *http.Request, credentials ...Credentials) *http.Request {
+	keys := chooseKeys(credentials)
+
+	// Add the X-Amz-Security-Token header when using STS
+	if keys.SecurityToken != "" {
+		request.Header.Set("X-Amz-Security-Token", keys.SecurityToken)
+	}
+
+	prepareRequestS3(request)
+
+	stringToSign := stringToSignS3(request, true)
 	signature := signatureS3(stringToSign, keys)
 
 	authHeader := "AWS " + keys.AccessKeyID + ":" + signature
